@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
     <xs:element name="smartphonelist">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="smartphone">
+                <xs:element name="smartphone" maxOccurs="unbounded" minOccurs="0">
                     <xs:complexType>
                         <xs:sequence>
                             <xs:element name="name" type="xs:string"/>
@@ -16,6 +16,7 @@
                             <xs:element name="price" type="xs:double"/>
 
                         </xs:sequence>
+                        <xs:attribute type="xs:byte" name="id" use="optional"/>
                     </xs:complexType>
                 </xs:element>
             </xs:sequence>

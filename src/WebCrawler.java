@@ -35,9 +35,10 @@ public class WebCrawler {
     String resolution;
     double finalPrice;
     Smartphonelist.Smartphone phone;
+    private  smartphonelist;
 
-    ArrayList<Smartphonelist.Smartphone> smartphoneList = new ArrayList<>();
     ArrayList<Double> priceList = new ArrayList<>();
+
 
     public WebCrawler() throws IOException {
         doc = Jsoup.connect(url).get();
@@ -104,7 +105,7 @@ public class WebCrawler {
 
             }
 
-            phone = new Smartphonelist.Smartphone();
+
 
             phone.setName(name);
             phone.setScreenSizeInches(screenSizeInches);
@@ -122,16 +123,16 @@ public class WebCrawler {
 
             String finalPriceByPhone = priceByPhone.getElementsByTag("ins").attr("content");
             finalPrice = round(Double.parseDouble(finalPriceByPhone), 2);
-            priceList.add(finalPrice);
+            smartphonelist.smartphone.add()
 
         }
         //System.out.println("Price list:" +  priceList);
         int i = 0;
-        for (Smartphonelist.Smartphone sPhone : smartphoneList) {
+        for (Smartphonelist.Smartphone sPhone : smartphoneList.) {
             sPhone.setPrice(priceList.get(i));
             i++;
         }
-        //jaxbObjectToXML(smartphoneList);
+        jaxbObjectToXML();
     }
 
     public static void main(String[] args) throws IOException {
