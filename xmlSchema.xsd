@@ -1,20 +1,29 @@
 <?xml version="1.0"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
-    <xs:element name="smartphone">
+    <xs:element name="smartphonelist">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="name" type="xs:string"/>
-                <xs:element name="processor" type="xs:string"/>
-                <xs:element name="screenTechnology" type="xs:string"/>
-                <xs:element name="screenSizeInches" type="xs:string"/>
-                <xs:element name="screenSizePx" type="xs:string"/>
-                <xs:element name="resolution" type="xs:string"/>
-                <xs:element name="price" type="xs:double"/>
+                <xs:element name="smartphone">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="name" type="xs:string"/>
+                            <xs:element name="processor" type="xs:string"/>
+                            <xs:element name="screenTechnology" type="xs:string"/>
+                            <xs:element name="screenSizeInches" type="xs:string"/>
+                            <xs:element name="screenSizePx" type="xs:string"/>
+                            <xs:element name="resolution" type="xs:string"/>
+                            <xs:element name="price" type="xs:double"/>
+
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
-
 </xs:schema>
+
+
+
 
 

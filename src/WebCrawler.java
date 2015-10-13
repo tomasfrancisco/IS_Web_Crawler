@@ -14,20 +14,29 @@ import org.jsoup.select.Elements;
  *
  * @author danielamaral
  */
+import java.io.File;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
+
 public class WebCrawler {
 
     private static final String url = "http://www.pixmania.pt/telefones/telemovel/smartphone-19883-s.html";
     private static final String FILE_NAME = "SavedSmartphones.xml";
+
     Document doc;
     Elements currentPhones;
     String name;
     String processor;
     String screenTechnology;
-    String screenSize;
+    String screenSizeInches;
+    String screenSizePx;
     String resolution;
     double finalPrice;
-    Smartphone phone;
-    ArrayList<Smartphone> smartphoneList = new ArrayList<>();
+    Smartphonelist.Smartphone phone;
+
+    ArrayList<Smartphonelist.Smartphone> smartphoneList = new ArrayList<>();
     ArrayList<Double> priceList = new ArrayList<>();
 
     public WebCrawler() throws IOException {
@@ -44,6 +53,7 @@ public class WebCrawler {
                 Element headerTag = header.get(0);
                 name = headerTag.getElementsByTag("a").attr("title");
                 name = name.substring(0, name.indexOf("-"));
+
             } else {
                 continue;
             }
@@ -57,35 +67,53 @@ public class WebCrawler {
                         .getElementsByTag("li");
 
                 //Processador
-                processor = caracteristics
-                        .get(0)
-                        .toString();
-                processor = processor.substring(processor.indexOf(": ") + 2, processor.length() - 5); //PERGUNTAR AO PROF O QUE FAZEMOS COM A MEMORIA RAM
+                if(caracteristics.size() > 0) {
+                    processor = caracteristics
+                            .get(0)
+                            .toString();
 
-                //Screen Technology
-                screenTechnology = caracteristics
-                        .get(1)
-                        .toString();
-                screenTechnology = screenTechnology.substring(screenTechnology.indexOf(": ") + 2, screenTechnology.length() - 5);
-                //Screen Size
-                String tempScreenSize
-                        = caracteristics
-                        .get(2)
-                        .toString();
+                    processor = processor.substring(processor.indexOf(": ") + 2, processor.length() - 5); //PERGUNTAR AO PROF O QUE FAZEMOS COM A MEMORIA RAM
 
-                screenSize = tempScreenSize.substring(tempScreenSize.indexOf(": ") + 2, tempScreenSize.indexOf(": ") + 6);
+                    //Screen Technology
+                    screenTechnology = caracteristics
+                            .get(1)
+                            .toString();
+                    screenTechnology = screenTechnology.substring(screenTechnology.indexOf(": ") + 2, screenTechnology.length() - 5);
+                }
 
-                //Resolution
-                resolution = caracteristics
-                        .get(3)
-                        .toString();
-                resolution = resolution
-                        .substring(resolution.indexOf(": "), resolution.length() - 5);
+                if(caracteristics.size() > 1) {
+                    //Screen Size      #Problem: somo phones don't have all the characteristics specified. Gotta check the size.
+                    String tempScreenSize
+                            = caracteristics
+                            .get(2)
+                            .toString();
 
-                phone = new Smartphone(name, processor, screenTechnology, screenSize, resolution, 0);
-                smartphoneList.add(phone);
+                    String screenSize = tempScreenSize.substring(tempScreenSize.indexOf(":" ) + 1, tempScreenSize.length() - 5);
+                    screenSizeInches = screenSize.substring(0, screenSize.indexOf(" "));
+                    screenSizePx = screenSize.substring(screenSize.indexOf(" ") + 1, screenSize.length());
+                }
+
+                if(caracteristics.size() > 2) {
+                    //Resolution
+                    resolution = caracteristics
+                            .get(3)
+                            .toString();
+                    resolution = resolution
+                            .substring(resolution.indexOf(": "), resolution.length() - 5);
+                }
+
             }
 
+            phone = new Smartphonelist.Smartphone();
+
+            phone.setName(name);
+            phone.setScreenSizeInches(screenSizeInches);
+            phone.setScreenSizePx(screenSizePx);
+            phone.setProcessor(processor);
+            phone.setResolution(resolution);
+            phone.setScreenTechnology(screenTechnology);
+
+            System.out.println(phone.toString());
         }
 
         Elements priceElement = doc.select("span.currentPrice");
@@ -96,25 +124,19 @@ public class WebCrawler {
             finalPrice = round(Double.parseDouble(finalPriceByPhone), 2);
             priceList.add(finalPrice);
 
-//             //System.out.println(price);
-//            System.out.println("Nome: " + name
-//                    + "\nProcessador:" + processor
-//                    + "\nTecnologia de ecrã: " + screenTechnology
-//                    + "\nTamanho do ecrã: " + screenSize
-//                    + "\nResolução Máxima: " + resolution
-//                    + "\nPrice: " + finalPrice + "€"
-//                    + "\n--------------------");
         }
+        //System.out.println("Price list:" +  priceList);
         int i = 0;
-        for (Smartphone sPhone : smartphoneList) {
+        for (Smartphonelist.Smartphone sPhone : smartphoneList) {
             sPhone.setPrice(priceList.get(i));
             i++;
         }
-
+        //jaxbObjectToXML(smartphoneList);
     }
 
     public static void main(String[] args) throws IOException {
         WebCrawler crawler = new WebCrawler();
+
     }
 
     public static double round(double value, int places) {
@@ -128,21 +150,35 @@ public class WebCrawler {
         return (double) tmp / factor;
     }
 
-    private static void jaxbObjectToXML(Smartphone smartphone) {
+    private static Smartphonelist jaxbXMLtoObject() {
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(Smartphonelist.class);
+            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+
+            Smartphonelist list = (Smartphonelist) unmarshaller.unmarshal(new File(FILE_NAME));
+
+            return list;
+        } catch (JAXBException ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
+
+   private static void jaxbObjectToXML(Smartphonelist smphonelist  ) {
         try {
 
-            JAXBContext jaxbContext = JAXBContext.newInstance(Smartphone.class);
+            JAXBContext jaxbContext = JAXBContext.newInstance(Smartphonelist.class);
             Marshaller marshaller = jaxbContext.createMarshaller();
 
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 
-            marshaller.marshal(smartphone, System.out);
+            marshaller.marshal(smphonelist, System.out);
 
-            marshaller.marshal(smartphone, new File(FILE_NAME));
+            marshaller.marshal(smphonelist, new File(FILE_NAME));
 
         } catch (JAXBException ex) {
             ex.printStackTrace();
         }
-
     }
 }
