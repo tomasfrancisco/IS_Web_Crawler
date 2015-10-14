@@ -4,9 +4,10 @@ import javax.naming.NamingException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class ReceiverTopic extends Thread implements MessageListener {
-    TopicConnection connection = null;
-    TopicSession session = null;
+public class ReceiverTopic implements MessageListener {
+    ConnectionFactory connection = null;
+    JMSContext ctx = null;
+    JMSConsumer consumer = null;
     Topic topic = null;
     String subscriberName = null;
 
@@ -17,39 +18,12 @@ public class ReceiverTopic extends Thread implements MessageListener {
                          String password) throws NamingException, JMSException {
         this.subscriberName = subscriberName;
 
-        InitialContext ctx = new InitialContext();
-        Object tmp = ctx.lookup(connectionFactoryAddress);
+        InitialContext initialContext = new InitialContext();
 
-        TopicConnectionFactory tcf = (TopicConnectionFactory) tmp;
-        this.connection = tcf.createTopicConnection(username, password);
-        this.connection.setClientID(this.subscriberName);
-        this.topic = (Topic) ctx.lookup(topicAddress);
+        this.connection = (ConnectionFactory) initialContext.lookup(connectionFactoryAddress);
+        this.topic = (Topic) initialContext.lookup(topicAddress);
 
-        this.session = this.connection.createTopicSession(false, TopicSession.AUTO_ACKNOWLEDGE);
-
-        this.connection.start();
-    }
-
-    @Override
-    public void run() {
-        try {
-            this.startReceiverTopic();
-
-            System.out.println("To end program, type Q or q, " + "then <return>");
-            char answer = 0;
-            InputStreamReader inputStreamReader = new InputStreamReader(System.in);
-            while (!((answer == 'q') || (answer == 'Q'))) {
-                try {
-                    answer = (char) inputStreamReader.read();
-                } catch (IOException e) {
-                    System.out.println("I/O exception: " + e.toString());
-                }
-            }
-        } catch (JMSException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.ctx = connection.createContext(username, password);
     }
 
     @Override
@@ -65,15 +39,14 @@ public class ReceiverTopic extends Thread implements MessageListener {
     public void startReceiverTopic() throws JMSException, IOException {
         System.out.println("Starting " + this.subscriberName);
 
-        TopicSubscriber subscriber = this.session.createDurableSubscriber(this.topic, this.subscriberName);
-        subscriber.setMessageListener(this);
+        this.consumer = this.ctx.createConsumer(this.topic);
+        this.consumer.setMessageListener(this);
     }
 
     public void stopReceiverTopic() throws JMSException {
         System.out.println("Exiting " + this.subscriberName);
-        this.connection.stop();
-        this.session.close();
-        this.connection.close();
+        this.ctx.stop();
+        this.ctx.close();
     }
 
     public static void main(String[] args) {
@@ -93,13 +66,20 @@ public class ReceiverTopic extends Thread implements MessageListener {
                     }
                 }
             });
-            rt.start();
-            rt.join();
+
+            System.out.println("To end program, type Q or q, " + "then <return>");
+            char answer = 0;
+            InputStreamReader inputStreamReader = new InputStreamReader(System.in);
+            while (!((answer == 'q') || (answer == 'Q'))) {
+                try {
+                    answer = (char) inputStreamReader.read();
+                } catch (IOException e) {
+                    System.out.println("I/O exception: " + e.toString());
+                }
+            }
         } catch (NamingException e) {
             e.printStackTrace();
         } catch (JMSException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }

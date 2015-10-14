@@ -1,14 +1,18 @@
 import javax.jms.*;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Scanner;
 
-public class SenderTopic extends Thread {
-    TopicConnection connection = null;
-    TopicSession session = null;
+public class SenderTopic {
+    ConnectionFactory connection = null;
+    JMSContext ctx = null;
+    JMSProducer producer = null;
     Topic topic = null;
     String publisherName = null;
-    TopicPublisher publisher = null;
 
     public SenderTopic(String publisherName,
                        String connectionFactoryAddress,
@@ -16,60 +20,56 @@ public class SenderTopic extends Thread {
                        String username,
                        String password)
             throws NamingException, JMSException {
-
         this.publisherName = publisherName;
 
-        InitialContext ctx = new InitialContext();
-        Object tmp = ctx.lookup(connectionFactoryAddress);
+        InitialContext initialContext = new InitialContext();
 
-        TopicConnectionFactory tcf = (TopicConnectionFactory) tmp;
-        this.connection = tcf.createTopicConnection(username, password);
-        this.connection.setClientID(this.publisherName);
-        this.topic = (Topic) ctx.lookup(topicAddress);
+        this.connection = (ConnectionFactory) initialContext.lookup(connectionFactoryAddress);
+        this.topic = (Topic) initialContext.lookup(topicAddress);
 
-        this.session = this.connection.createTopicSession(false, TopicSession.AUTO_ACKNOWLEDGE);
-
-        this.connection.start();
-    }
-
-    @Override
-    public void run() {
-        this.startSenderTopic();
+        this.ctx = this.connection.createContext(username, password);
     }
 
     private void startSenderTopic() {
-        System.out.println("Starting " + this.publisherName);
-        try {
-            publisher = session.createPublisher(this.topic);
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
+        System.out.println("Starting " + this.publisherName + "...");
+        this.producer = this.ctx.createProducer();
     }
 
-    public void sendMessage() throws JMSException {
-        Scanner sc = new Scanner(System.in);
-        while(true) {
-            TextMessage tm = this.session.createTextMessage();
-            tm.setText(sc.next());
-            this.publisher.send(tm);
+    public void sendMessage(String msg) throws JMSException {
+        TextMessage tm = this.ctx.createTextMessage();
+        tm.setText(msg);
+        this.producer.send(this.topic, tm);
+    }
+
+    public void sendSmartphoneList(File smartphoneList) {
+        FileInputStream fileInputStream = null;
+
+        byte[] byteFile = new byte[(int) smartphoneList.length()];
+
+        try {
+            fileInputStream = new FileInputStream(smartphoneList);
+            fileInputStream.read(byteFile);
+            fileInputStream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        this.producer.send(this.topic, byteFile);
     }
 
     private void stopSenderTopic() {
         System.out.println("Exiting " + this.publisherName);
-        try {
-            this.connection.stop();
-            this.session.close();
-            this.connection.close();
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
+        this.ctx.stop();
+        this.ctx.close();
     }
 
     public static void main(String[] args) {
         SenderTopic st = null;
         try {
             st = new SenderTopic("SenderTopic", "jms/RemoteConnectionFactory", "jms/topic/SmartTopic", "topic", "topic");
+
+            st.sendMessage("Sender TOPIC CRL");
 
             final SenderTopic finalSt = st;
             Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -79,14 +79,9 @@ public class SenderTopic extends Thread {
                     finalSt.stopSenderTopic();
                 }
             });
-            st.start();
-            st.sendMessage();
-            st.join();
         } catch (NamingException e) {
             e.printStackTrace();
         } catch (JMSException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
