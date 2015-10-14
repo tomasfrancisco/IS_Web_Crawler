@@ -19,14 +19,17 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.crypto.dsig.XMLObject;
 
 public class WebCrawler {
 
     private static final String url = "http://www.pixmania.pt/telefones/telemovel/smartphone-19883-s.html";
     private static final String FILE_NAME = "SavedSmartphones.xml";
-
+    //The doc that's gonna have all the info
     Document doc;
     Elements currentPhones;
+
+    //Phone's attributes
     String name;
     String processor;
     String screenTechnology;
@@ -34,13 +37,23 @@ public class WebCrawler {
     String screenSizePx;
     String resolution;
     double finalPrice;
-    Smartphonelist.Smartphone phone;
-    private  smartphonelist;
 
+    //Create a factory
+    ObjectFactory factory = new ObjectFactory();
+    //Create a smartphone
+    Smartphone phone;
+    //Create a Smartphonelist
+    Smartphonelist listSmartphones;
+    //Create a price list
     ArrayList<Double> priceList = new ArrayList<>();
 
-
     public WebCrawler() throws IOException {
+
+        phone = factory.createSmartphone();
+        listSmartphones = factory.createSmartphonelist();
+
+
+        int i=0;
         doc = Jsoup.connect(url).get();
 
         currentPhones = doc.select("div.in");
@@ -114,7 +127,9 @@ public class WebCrawler {
             phone.setResolution(resolution);
             phone.setScreenTechnology(screenTechnology);
 
-            System.out.println(phone.toString());
+            listSmartphones.getSmartphone().add(phone);
+
+
         }
 
         Elements priceElement = doc.select("span.currentPrice");
@@ -123,16 +138,19 @@ public class WebCrawler {
 
             String finalPriceByPhone = priceByPhone.getElementsByTag("ins").attr("content");
             finalPrice = round(Double.parseDouble(finalPriceByPhone), 2);
-            smartphonelist.smartphone.add()
+
+            priceList.add(finalPrice);
+
+
 
         }
-        //System.out.println("Price list:" +  priceList);
-        int i = 0;
-        for (Smartphonelist.Smartphone sPhone : smartphoneList.) {
+        System.out.println("Price list:" +  priceList);
+
+      /* for (Smartphone sPhone : listSmartphones) {
             sPhone.setPrice(priceList.get(i));
             i++;
-        }
-        jaxbObjectToXML();
+        }*/
+        //jaxbObjectToXML();
     }
 
     public static void main(String[] args) throws IOException {
@@ -168,13 +186,13 @@ public class WebCrawler {
 
    private static void jaxbObjectToXML(Smartphonelist smphonelist  ) {
         try {
-
+            XMLObject xmlObject;
             JAXBContext jaxbContext = JAXBContext.newInstance(Smartphonelist.class);
             Marshaller marshaller = jaxbContext.createMarshaller();
 
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 
-            marshaller.marshal(smphonelist, System.out);
+//            marshaller.marshal(smphonelist, xmlObject );
 
             marshaller.marshal(smphonelist, new File(FILE_NAME));
 
