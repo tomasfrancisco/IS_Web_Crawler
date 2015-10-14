@@ -1,7 +1,6 @@
 import javax.jms.*;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import java.io.IOException;
 import java.util.Scanner;
 
 public class SenderTopic extends Thread {

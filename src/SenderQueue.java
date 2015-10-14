@@ -3,37 +3,34 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Scanner;
 
-public class ReceiverTopic extends Thread implements MessageListener {
-    TopicConnection connection = null;
-    TopicSession session = null;
-    Topic topic = null;
+public class SenderQueue extends Thread {
+    ConnectionFactory connection = null;
+    JMSContext ctx = null;
+    JMSProducer producer = null;
+    Queue queue = null;
     String subscriberName = null;
 
-    public ReceiverTopic(String subscriberName,
+    public SenderQueue(String subscriberName,
                          String connectionFactoryAddress,
-                         String topicAddress,
+                         String queueAddress,
                          String username,
                          String password) throws NamingException, JMSException {
         this.subscriberName = subscriberName;
 
-        InitialContext ctx = new InitialContext();
-        Object tmp = ctx.lookup(connectionFactoryAddress);
+        InitialContext initialContext = new InitialContext();
 
-        TopicConnectionFactory tcf = (TopicConnectionFactory) tmp;
-        this.connection = tcf.createTopicConnection(username, password);
-        this.connection.setClientID(this.subscriberName);
-        this.topic = (Topic) ctx.lookup(topicAddress);
+        this.connection = InitialContext.doLookup(connectionFactoryAddress);
+        this.queue = (Queue) initialContext.lookup(queueAddress);
 
-        this.session = this.connection.createTopicSession(false, TopicSession.AUTO_ACKNOWLEDGE);
-
-        this.connection.start();
+        this.ctx = this.connection.createContext(username, password);
     }
 
     @Override
     public void run() {
         try {
-            this.startReceiverTopic();
+            this.startSenderQueue();
 
             System.out.println("To end program, type Q or q, " + "then <return>");
             char answer = 0;
@@ -52,42 +49,43 @@ public class ReceiverTopic extends Thread implements MessageListener {
         }
     }
 
-    @Override
-    public void onMessage(Message message) {
-        TextMessage msg = (TextMessage) message;
-        try {
-            System.out.println("Got message: " + msg.getText());
-        } catch (JMSException e) {
-            e.printStackTrace();
+    public void startSenderQueue() throws JMSException, IOException {
+        System.out.println("Starting " + this.subscriberName);
+
+        //QueueReceiver subscriber = this.session.createReceiver(this.queue);
+        //subscriber.setMessageListener(this);
+
+        this.producer = this.ctx.createProducer();
+        this.sendMessage();
+    }
+
+    public void sendMessage() throws JMSException {
+        Scanner sc = new Scanner(System.in);
+        while(true) {
+            TextMessage tm = this.ctx.createTextMessage();
+            tm.setText(sc.next());
+            this.producer.send(this.queue, tm);
         }
     }
 
-    public void startReceiverTopic() throws JMSException, IOException {
-        System.out.println("Starting " + this.subscriberName);
-
-        TopicSubscriber subscriber = this.session.createDurableSubscriber(this.topic, this.subscriberName);
-        subscriber.setMessageListener(this);
-    }
-
-    public void stopReceiverTopic() throws JMSException {
+    public void stopSenderQueue() throws JMSException {
         System.out.println("Exiting " + this.subscriberName);
-        this.connection.stop();
-        this.session.close();
-        this.connection.close();
+        this.ctx.stop();
+        this.ctx.close();
     }
 
     public static void main(String[] args) {
-        ReceiverTopic rt = null;
+        SenderQueue rt = null;
         try {
-            rt = new ReceiverTopic("Receiver Topic", "jms/RemoteConnectionFactory", "jms/topic/SmartTopic", "topic", "topic");
+            rt = new SenderQueue("Sender Topic", "jms/RemoteConnectionFactory", "jms/queue/PlayQueue", "topic", "topic");
 
-            final ReceiverTopic finalRt = rt;
+            final SenderQueue finalRt = rt;
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
                     System.out.println("Shutting down " + finalRt.subscriberName + "...");
                     try {
-                        finalRt.stopReceiverTopic();
+                        finalRt.stopSenderQueue();
                     } catch (JMSException e) {
                         e.printStackTrace();
                     }
