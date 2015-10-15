@@ -23,8 +23,8 @@ import javax.xml.crypto.dsig.XMLObject;
 
 public class WebCrawler {
 
-    private static final String url = "http://www.pixmania.pt/telefones/telemovel/smartphone/xx-xx-xx-xx-relevance-1-20-page-19883-s.html";
-    private static final String FILE_NAME = "SavedSmartphones.xml";
+    private static final String url = "http://www.pixmania.pt/telefones/telemovel/smartphone/xx-xx-xx-xx-relevance-2-20-page-19883-s.html";
+    private static final String FILE_NAME = "src/SavedSmartphones.xml";
     //The doc that's gonna have all the info
     Document doc;
     Elements currentPhones;
@@ -75,7 +75,7 @@ public class WebCrawler {
                 tempTitle = tempTitle.substring(0, tempTitle.indexOf("-"));
                 brand = tempTitle.substring(0,tempTitle.indexOf(" "));
                 model = tempTitle.substring(tempTitle.indexOf(" ")+1,tempTitle.length());
-                System.out.println(brand + " " + model);
+               /* System.out.println(brand + " " + model);*/
 
             } else {
                 continue;
@@ -95,7 +95,7 @@ public class WebCrawler {
                             .get(0)
                             .toString();
 
-                    processor = processor.substring(processor.indexOf(": ") + 2, processor.length() - 5); //PERGUNTAR AO PROF O QUE FAZEMOS COM A MEMORIA RAM
+                    processor = processor.substring(processor.indexOf(": ") + 2, processor.length() - 5);
 
                     //Screen Technology
                     screenTechnology = caracteristics
@@ -105,15 +105,21 @@ public class WebCrawler {
                 }
 
                 if(caracteristics.size() > 1) {
-                    //Screen Size      #Problem: somo phones don't have all the characteristics specified. Gotta check the size.
+                    //Screen Size      #Problem: some phones don't have all the characteristics specified. Gotta check the size.
                     String tempScreenSize
                             = caracteristics
                             .get(2)
                             .toString();
 
-                    String screenSize = tempScreenSize.substring(tempScreenSize.indexOf(":" ) + 1, tempScreenSize.length() - 5);
-                    screenSizeInches = screenSize.substring(0, screenSize.indexOf(" "));
-                    screenSizePx = screenSize.substring(screenSize.indexOf(" ") + 1, screenSize.length());
+                    String screenSize = tempScreenSize.substring(tempScreenSize.indexOf(": " ) + 1, tempScreenSize.length() - 5).trim();
+                    //System.out.println(screenSize);
+                    if(screenSize.indexOf(" ")==-1)
+                        continue;
+                    screenSizeInches = screenSize.substring(0,screenSize.indexOf(" "));
+                    //System.out.println(screenSizeInches);
+                    screenSizePx = screenSize.substring(screenSize.indexOf(" "),screenSize.length());
+                    screenSizePx=screenSizePx.replaceAll("[()-]","");
+                    //System.out.println(screenSizePx);
                 }
 
                 if(caracteristics.size() > 2) {
@@ -122,8 +128,10 @@ public class WebCrawler {
                             .get(3)
                             .toString();
                     resolution = resolution
-                            .substring(resolution.indexOf(": "), resolution.length() - 5);
+                            .substring(resolution.indexOf(":")+2, resolution.length() - 5);
+
                 }
+
 
             }
 
