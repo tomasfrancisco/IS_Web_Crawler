@@ -101,7 +101,7 @@ public class SenderTopic {
             Smartphonelist list = factory.createSmartphonelist();
             List<Smartphone> smartphonelist = list.getSmartphone();
             Smartphone phone = new Smartphone();
-            phone.setName("OLAAA CRL!!!");
+            phone.setBrand("OLAAA CRL!!!");
             smartphonelist.add(phone);
 
             File file = st.jaxbObjectToXML(list);

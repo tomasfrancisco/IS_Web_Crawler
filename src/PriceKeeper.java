@@ -42,7 +42,7 @@ public class PriceKeeper {
 
     public Smartphone getSmartphone(String reference) {
         for(Smartphone phone : this.smartphones)
-            if(phone.getName().contains(reference) ||
+            if(phone.getBrand().contains(reference) ||
                     phone.getProcessor().contains(reference) ||
                     phone.getResolution().contains(reference) ||
                     phone.getScreenSizeInches().contains(reference) ||
@@ -58,6 +58,8 @@ public class PriceKeeper {
 
             ReceiverTopic rt = new ReceiverTopic("Receiver Topic Msg PriceKeeper", "jms/RemoteConnectionFactory", "jms/topic/SmartTopic", "topic", "topic");
             rt.startReceiverTopic(pk);
+
+
         } catch (NamingException e) {
             e.printStackTrace();
         } catch (JMSException e) {
