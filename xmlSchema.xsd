@@ -7,7 +7,8 @@
                 <xs:element name="smartphone" maxOccurs="unbounded" minOccurs="0">
                     <xs:complexType>
                         <xs:sequence>
-                            <xs:element name="name" type="xs:string"/>
+                            <xs:element name="brand" type="xs:string"/>
+                            <xs:element name="model" type="xs:string"/>
                             <xs:element name="processor" type="xs:string"/>
                             <xs:element name="screenTechnology" type="xs:string"/>
                             <xs:element name="screenSizeInches" type="xs:string"/>
