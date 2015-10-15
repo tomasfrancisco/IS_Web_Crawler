@@ -1,6 +1,5 @@
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -15,6 +14,7 @@ import org.jsoup.select.Elements;
  * @author danielamaral
  */
 import java.io.File;
+import java.util.List;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -23,14 +23,15 @@ import javax.xml.crypto.dsig.XMLObject;
 
 public class WebCrawler {
 
-    private static final String url = "http://www.pixmania.pt/telefones/telemovel/smartphone-19883-s.html";
+    private static final String url = "http://www.pixmania.pt/telefones/telemovel/smartphone/xx-xx-xx-xx-relevance-1-20-page-19883-s.html";
     private static final String FILE_NAME = "SavedSmartphones.xml";
     //The doc that's gonna have all the info
     Document doc;
     Elements currentPhones;
 
     //Phone's attributes
-    String name;
+    String brand;
+    String model;
     String processor;
     String screenTechnology;
     String screenSizeInches;
@@ -46,12 +47,13 @@ public class WebCrawler {
     Smartphonelist listSmartphones;
     //Create a price list
     ArrayList<Double> priceList = new ArrayList<>();
+    List<Smartphone> smartphones;
 
     public WebCrawler() throws IOException {
 
-        phone = factory.createSmartphone();
-        listSmartphones = factory.createSmartphonelist();
 
+        listSmartphones = factory.createSmartphonelist();
+        smartphones = listSmartphones.getSmartphone();
 
         int i=0;
         doc = Jsoup.connect(url).get();
@@ -62,11 +64,18 @@ public class WebCrawler {
 //            sSystem.out.println(tempPhone);
             Elements header = tempPhone.getElementsByClass("productTitle");
 
+            phone = factory.createSmartphone();
+
             //Smartphone name
             if (header.size() > 0) {
                 Element headerTag = header.get(0);
-                name = headerTag.getElementsByTag("a").attr("title");
-                name = name.substring(0, name.indexOf("-"));
+                String tempTitle = headerTag.getElementsByTag("a").attr("title");
+                if(tempTitle.indexOf("-") == -1)
+                    continue;
+                tempTitle = tempTitle.substring(0, tempTitle.indexOf("-"));
+                brand = tempTitle.substring(0,tempTitle.indexOf(" "));
+                model = tempTitle.substring(tempTitle.indexOf(" ")+1,tempTitle.length());
+                System.out.println(brand + " " + model);
 
             } else {
                 continue;
@@ -119,38 +128,33 @@ public class WebCrawler {
             }
 
 
-
-            phone.setName(name);
+            phone.setBrand(brand);
+            phone.setModel(model);
             phone.setScreenSizeInches(screenSizeInches);
             phone.setScreenSizePx(screenSizePx);
             phone.setProcessor(processor);
             phone.setResolution(resolution);
             phone.setScreenTechnology(screenTechnology);
 
-            listSmartphones.getSmartphone().add(phone);
-
-
+            smartphones.add(phone);
         }
 
         Elements priceElement = doc.select("span.currentPrice");
 
         for (Element priceByPhone : priceElement) {
-
             String finalPriceByPhone = priceByPhone.getElementsByTag("ins").attr("content");
             finalPrice = round(Double.parseDouble(finalPriceByPhone), 2);
-
             priceList.add(finalPrice);
-
-
-
         }
-        System.out.println("Price list:" +  priceList);
 
-      /* for (Smartphone sPhone : listSmartphones) {
+        i=0;
+        for(Smartphone sPhone : smartphones) {
             sPhone.setPrice(priceList.get(i));
             i++;
-        }*/
-        //jaxbObjectToXML();
+        }
+
+        //System.out.println(smartphones );
+        jaxbObjectToXML(listSmartphones);
     }
 
     public static void main(String[] args) throws IOException {
@@ -184,20 +188,23 @@ public class WebCrawler {
     }
 
 
-   private static void jaxbObjectToXML(Smartphonelist smphonelist  ) {
+    private static void jaxbObjectToXML(Smartphonelist listSmartphones  ) {
         try {
-            XMLObject xmlObject;
+            OutputStream os = new FileOutputStream(FILE_NAME);
             JAXBContext jaxbContext = JAXBContext.newInstance(Smartphonelist.class);
+
             Marshaller marshaller = jaxbContext.createMarshaller();
 
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 
-//            marshaller.marshal(smphonelist, xmlObject );
+           // marshaller.marshal(listSmartphones, System.out );
 
-            marshaller.marshal(smphonelist, new File(FILE_NAME));
+            marshaller.marshal(listSmartphones, os);
 
         } catch (JAXBException ex) {
             ex.printStackTrace();
+        }catch (FileNotFoundException fnfEx){
+            fnfEx.printStackTrace();
         }
     }
 }
