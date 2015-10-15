@@ -1,8 +1,10 @@
 import javax.jms.*;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import java.io.*;
 
 public class ReceiverTopic implements MessageListener {
     ConnectionFactory connection = null;
@@ -10,6 +12,7 @@ public class ReceiverTopic implements MessageListener {
     JMSConsumer consumer = null;
     Topic topic = null;
     String subscriberName = null;
+    PriceKeeper priceKeeper = null;
 
     public ReceiverTopic(String subscriberName,
                          String connectionFactoryAddress,
@@ -28,19 +31,36 @@ public class ReceiverTopic implements MessageListener {
 
     @Override
     public void onMessage(Message message) {
-        TextMessage msg = (TextMessage) message;
+        BytesMessage byteFile = (BytesMessage) message;
         try {
-            System.out.println("Got message: " + msg.getText());
+            byte[] data = new byte[(int) byteFile.getBodyLength()];
+            byteFile.readBytes(data, (int) byteFile.getBodyLength());
+            File file = new File("smartphonelist.xml");
+            FileOutputStream fileOutputStream = new FileOutputStream(file);
+            fileOutputStream.write(data);
+
+            this.priceKeeper.saveSmartphone(file);
+
+            System.out.println("Got new file.");
         } catch (JMSException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void startReceiverTopic() throws JMSException, IOException {
+
+
+    public void startReceiverTopic(PriceKeeper priceKeeper) throws JMSException, IOException {
         System.out.println("Starting " + this.subscriberName);
+
+        this.priceKeeper = priceKeeper;
 
         this.consumer = this.ctx.createConsumer(this.topic);
         this.consumer.setMessageListener(this);
+        System.in.read();
     }
 
     public void stopReceiverTopic() throws JMSException {
@@ -53,6 +73,7 @@ public class ReceiverTopic implements MessageListener {
         ReceiverTopic rt = null;
         try {
             rt = new ReceiverTopic("Receiver Topic", "jms/RemoteConnectionFactory", "jms/topic/SmartTopic", "topic", "topic");
+
 
             final ReceiverTopic finalRt = rt;
             Runtime.getRuntime().addShutdownHook(new Thread() {

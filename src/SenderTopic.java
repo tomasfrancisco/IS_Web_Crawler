@@ -1,10 +1,15 @@
 import javax.jms.*;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.crypto.dsig.XMLObject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Scanner;
 
 public class SenderTopic {
@@ -64,12 +69,44 @@ public class SenderTopic {
         this.ctx.close();
     }
 
+    private static File jaxbObjectToXML(Smartphonelist smphonelist) {
+        try {
+            XMLObject xmlObject;
+            JAXBContext jaxbContext = JAXBContext.newInstance(Smartphonelist.class);
+            Marshaller marshaller = jaxbContext.createMarshaller();
+
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+
+//            marshaller.marshal(smphonelist, xmlObject );
+
+            File file = new File("saved.xml");
+            marshaller.marshal(smphonelist, file);
+
+            return file;
+
+        } catch (JAXBException ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
     public static void main(String[] args) {
         SenderTopic st = null;
         try {
             st = new SenderTopic("SenderTopic", "jms/RemoteConnectionFactory", "jms/topic/SmartTopic", "topic", "topic");
 
-            st.sendMessage("Sender TOPIC CRL");
+            st.startSenderTopic();
+
+            ObjectFactory factory = new ObjectFactory();
+            Smartphonelist list = factory.createSmartphonelist();
+            List<Smartphone> smartphonelist = list.getSmartphone();
+            Smartphone phone = new Smartphone();
+            phone.setName("OLAAA CRL!!!");
+            smartphonelist.add(phone);
+
+            File file = st.jaxbObjectToXML(list);
+
+            st.sendSmartphoneList(file);
 
             final SenderTopic finalSt = st;
             Runtime.getRuntime().addShutdownHook(new Thread() {
