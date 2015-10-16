@@ -10,14 +10,14 @@ public class SenderQueue implements MessageListener {
     JMSConsumer consumer = null;
     Queue queue = null;
     Queue tQueue = null;
-    String subscriberName = null;
+    String publisherName = null;
 
-    public SenderQueue(String subscriberName,
+    public SenderQueue(String publisherName,
                          String connectionFactoryAddress,
                          String queueAddress,
                          String username,
                          String password) throws NamingException, JMSException {
-        this.subscriberName = subscriberName;
+        this.publisherName = publisherName;
 
         InitialContext initialContext = new InitialContext();
         this.connection = (ConnectionFactory) initialContext.lookup(connectionFactoryAddress);
@@ -38,7 +38,7 @@ public class SenderQueue implements MessageListener {
     }
 
     public void startSenderQueue() throws JMSException, IOException {
-        System.out.println("Starting " + this.subscriberName + "...");
+        System.out.println("Starting " + this.publisherName + "...");
         this.producer = this.ctx.createProducer();
         this.tQueue = this.ctx.createTemporaryQueue();
         this.consumer = this.ctx.createConsumer(tQueue);
@@ -53,7 +53,7 @@ public class SenderQueue implements MessageListener {
     }
 
     public void stopSenderQueue() throws JMSException {
-        System.out.println("Exiting " + this.subscriberName);
+        System.out.println("Exiting " + this.publisherName);
         this.ctx.stop();
         this.ctx.close();
         System.out.println("Terminated.");

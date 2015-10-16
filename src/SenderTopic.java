@@ -33,7 +33,7 @@ public class SenderTopic {
         this.ctx = this.connection.createContext(username, password);
     }
 
-    private void startSenderTopic() {
+    public void startSenderTopic() {
         System.out.println("Starting " + this.publisherName + "...");
         this.producer = this.ctx.createProducer();
     }
@@ -61,14 +61,14 @@ public class SenderTopic {
         this.producer.send(this.topic, byteFile);
     }
 
-    private void stopSenderTopic() {
+    public void stopSenderTopic() {
         System.out.println("Exiting " + this.publisherName + "...");
         this.ctx.stop();
         this.ctx.close();
         System.out.println("Terminated.");
     }
 
-    protected static File jaxbObjectToXML(Smartphonelist smphonelist) {
+    private static File jaxbObjectToXML(Smartphonelist smphonelist) {
         try {
             XMLObject xmlObject;
             JAXBContext jaxbContext = JAXBContext.newInstance(Smartphonelist.class);

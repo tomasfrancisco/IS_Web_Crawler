@@ -39,8 +39,10 @@ public class PriceKeeper {
                     if (!smartphones.contains(newPhone)) {
                         smartphones.add(newPhone);
                         System.out.println("Saved new smartphone.");
+                        break;
                     } else {
                         System.out.println("Smartphone already exists.");
+                        break;
                     }
 
             } else {
