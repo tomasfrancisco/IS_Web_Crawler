@@ -55,129 +55,143 @@ public class WebCrawler {
         smartphones = listSmartphones.getSmartphone();
 
         int i=0;
-        doc = Jsoup.connect(url).get();
+        try {
+            doc = Jsoup.connect(url).get();
 
-        currentPhones = doc.select("div.in");
 
-        for (Element tempPhone : currentPhones) {
+
+
+            currentPhones = doc.select("div.in");
+
+
+            for (Element tempPhone : currentPhones) {
 //            sSystem.out.println(tempPhone);
-            Elements header = tempPhone.getElementsByClass("productTitle");
+                Elements header = tempPhone.getElementsByClass("productTitle");
 
-            phone = factory.createSmartphone();
+                phone = factory.createSmartphone();
 
-            //Smartphone name
-            if (header.size() > 0) {
-                Element headerTag = header.get(0);
-                String tempTitle = headerTag.getElementsByTag("a").attr("title");
-                if(tempTitle.indexOf("-") == -1)
-                    continue;
-                tempTitle = tempTitle.substring(0, tempTitle.indexOf("-"));
-                brand = tempTitle.substring(0,tempTitle.indexOf(" "));
-                model = tempTitle.substring(tempTitle.indexOf(" ")+1,tempTitle.length());
+                //Smartphone name
+                if (header.size() > 0) {
+                    Element headerTag = header.get(0);
+                    String tempTitle = headerTag.getElementsByTag("a").attr("title");
+                    if (tempTitle.indexOf("-") == -1)
+                        continue;
+                    tempTitle = tempTitle.substring(0, tempTitle.indexOf("-"));
+                    brand = tempTitle.substring(0, tempTitle.indexOf(" "));
+                    model = tempTitle.substring(tempTitle.indexOf(" ") + 1, tempTitle.length());
                /* System.out.println(brand + " " + model);*/
 
-            } else {
-                continue;
-            }
+                } else {
+                    continue;
+                }
 
-            Elements list = tempPhone.getElementsByClass("customList");
+                Elements list = tempPhone.getElementsByClass("customList");
 
-            if (list.size() > 0) {
+                if (list.size() > 0) {
 
-                Elements caracteristics = list
-                        .get(0)
-                        .getElementsByTag("li");
-
-                //Processador
-                if(caracteristics.size() > 0) {
-                    processor = caracteristics
+                    Elements caracteristics = list
                             .get(0)
-                            .toString();
+                            .getElementsByTag("li");
 
-                    processor = processor.substring(processor.indexOf(": ") + 2, processor.length() - 5);
+                    //Processador
+                    if (caracteristics.size() > 0) {
+                        processor = caracteristics
+                                .get(0)
+                                .toString();
 
-                    //Screen Technology
-                    screenTechnology = caracteristics
-                            .get(1)
-                            .toString();
-                    screenTechnology = screenTechnology.substring(screenTechnology.indexOf(": ") + 2, screenTechnology.length() - 5);
+                        processor = processor.substring(processor.indexOf(": ") + 2, processor.length() - 5);
+
+                        //Screen Technology
+                        screenTechnology = caracteristics
+                                .get(1)
+                                .toString();
+                        screenTechnology = screenTechnology.substring(screenTechnology.indexOf(": ") + 2, screenTechnology.length() - 5);
+                    }
+
+                    if (caracteristics.size() > 1) {
+                        //Screen Size      #Problem: some phones don't have all the characteristics specified. Gotta check the size.
+                        String tempScreenSize
+                                = caracteristics
+                                .get(2)
+                                .toString();
+
+                        String screenSize = tempScreenSize.substring(tempScreenSize.indexOf(": ") + 1, tempScreenSize.length() - 5).trim();
+                        //System.out.println(screenSize);
+                        if (screenSize.indexOf(" ") == -1)
+                            continue;
+                        screenSizeInches = screenSize.substring(0, screenSize.indexOf(" "));
+                        //System.out.println(screenSizeInches);
+                        screenSizePx = screenSize.substring(screenSize.indexOf(" "), screenSize.length());
+                        screenSizePx = screenSizePx.replaceAll("[()-]", "");
+                        //System.out.println(screenSizePx);
+                    }
+
+                    if (caracteristics.size() > 2) {
+                        //Resolution
+                        resolution = caracteristics
+                                .get(3)
+                                .toString();
+                        resolution = resolution
+                                .substring(resolution.indexOf(":") + 2, resolution.length() - 5);
+                    }
                 }
 
-                if(caracteristics.size() > 1) {
-                    //Screen Size      #Problem: some phones don't have all the characteristics specified. Gotta check the size.
-                    String tempScreenSize
-                            = caracteristics
-                            .get(2)
-                            .toString();
+                phone.setBrand(brand);
+                phone.setModel(model);
+                phone.setScreenSizeInches(screenSizeInches);
+                phone.setScreenSizePx(screenSizePx);
+                phone.setProcessor(processor);
+                phone.setResolution(resolution);
+                phone.setScreenTechnology(screenTechnology);
 
-                    String screenSize = tempScreenSize.substring(tempScreenSize.indexOf(": " ) + 1, tempScreenSize.length() - 5).trim();
-                    //System.out.println(screenSize);
-                    if(screenSize.indexOf(" ")==-1)
-                        continue;
-                    screenSizeInches = screenSize.substring(0,screenSize.indexOf(" "));
-                    //System.out.println(screenSizeInches);
-                    screenSizePx = screenSize.substring(screenSize.indexOf(" "),screenSize.length());
-                    screenSizePx=screenSizePx.replaceAll("[()-]","");
-                    //System.out.println(screenSizePx);
-                }
-
-                if(caracteristics.size() > 2) {
-                    //Resolution
-                    resolution = caracteristics
-                            .get(3)
-                            .toString();
-                    resolution = resolution
-                            .substring(resolution.indexOf(":")+2, resolution.length() - 5);
-                }
+                smartphones.add(phone);
             }
 
-            phone.setBrand(brand);
-            phone.setModel(model);
-            phone.setScreenSizeInches(screenSizeInches);
-            phone.setScreenSizePx(screenSizePx);
-            phone.setProcessor(processor);
-            phone.setResolution(resolution);
-            phone.setScreenTechnology(screenTechnology);
+            Elements priceElement = doc.select("span.currentPrice");
 
-            smartphones.add(phone);
-        }
-
-        Elements priceElement = doc.select("span.currentPrice");
-
-        for (Element priceByPhone : priceElement) {
-            String finalPriceByPhone = priceByPhone.getElementsByTag("ins").attr("content");
-            finalPrice = round(Double.parseDouble(finalPriceByPhone), 2);
-            priceList.add(finalPrice);
-        }
-
-        i=0;
-        for(Smartphone sPhone : smartphones) {
-            sPhone.setPrice(priceList.get(i));
-            i++;
-        }
-
-        //System.out.println(smartphones );
-        File newFile = jaxbObjectToXML(listSmartphones);
-
-        int count = 0;
-        int maxTries = 3;
-        while(count < maxTries) {
-            try {
-                SenderTopic st = new SenderTopic("price_keeper_topic_sender", "jms/RemoteConnectionFactory", "jms/topic/SmartTopic", "topic", "topic");
-                st.startSenderTopic();
-                st.sendSmartphoneList(newFile);
-                st.stopSenderTopic();
-                break;
-            } catch (NamingException e) {
-                e.printStackTrace();
-                System.out.println("Retrying");
-                count++;
-            } catch (JMSException e) {
-                e.printStackTrace();
-                System.out.println("Retrying");
-                count++;
+            for (Element priceByPhone : priceElement) {
+                String finalPriceByPhone = priceByPhone.getElementsByTag("ins").attr("content");
+                finalPrice = round(Double.parseDouble(finalPriceByPhone), 2);
+                priceList.add(finalPrice);
             }
+
+            i = 0;
+            for (Smartphone sPhone : smartphones) {
+                sPhone.setPrice(priceList.get(i));
+                i++;
+            }
+
+            //System.out.println(smartphones );
+            File newFile = jaxbObjectToXML(listSmartphones);
+
+            int count = 0;
+            int maxTries = 3;
+            while (count < maxTries) {
+                try {
+                    SenderTopic st = new SenderTopic("price_keeper_topic_sender", "jms/RemoteConnectionFactory", "jms/topic/SmartTopic", "topic", "topic");
+                    st.startSenderTopic();
+                    st.sendSmartphoneList(newFile);
+                    st.stopSenderTopic();
+                    break;
+                } catch (NamingException e) {
+                    e.printStackTrace();
+                    System.out.println("Retrying");
+                    count++;
+                } catch (JMSException e) {
+                    e.printStackTrace();
+                    System.out.println("Retrying");
+                    count++;
+                }
+            }
+        }catch (IllegalArgumentException iaEx){
+            System.out.println("Exception: "+iaEx);
+        }catch (NullPointerException npEx){
+            System.out.println("Exception: "+npEx);
+        }catch (CharConversionException e) {
+            System.out.println(e);
         }
+
+
 
 
     }
