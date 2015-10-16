@@ -15,6 +15,7 @@ import org.jsoup.select.Elements;
  */
 import java.io.File;
 import java.util.List;
+import java.util.Scanner;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -23,8 +24,12 @@ import javax.xml.crypto.dsig.XMLObject;
 
 public class WebCrawler {
 
-    private static final String url = "http://www.pixmania.pt/telefones/telemovel/smartphone/xx-xx-xx-xx-relevance-2-20-page-19883-s.html";
+    private static String url;
     private static final String FILE_NAME = "src/SavedSmartphones.xml";
+
+    //User input
+
+
     //The doc that's gonna have all the info
     Document doc;
     Elements currentPhones;
@@ -50,7 +55,6 @@ public class WebCrawler {
     List<Smartphone> smartphones;
 
     public WebCrawler() throws IOException {
-
 
         listSmartphones = factory.createSmartphonelist();
         smartphones = listSmartphones.getSmartphone();
@@ -129,12 +133,8 @@ public class WebCrawler {
                             .toString();
                     resolution = resolution
                             .substring(resolution.indexOf(":")+2, resolution.length() - 5);
-
                 }
-
-
             }
-
 
             phone.setBrand(brand);
             phone.setModel(model);
@@ -166,7 +166,14 @@ public class WebCrawler {
     }
 
     public static void main(String[] args) throws IOException {
-        WebCrawler crawler = new WebCrawler();
+        Scanner sc = new Scanner(System.in);
+        while(true) {
+            System.out.println("Enter a valid URL to parse: ");
+            url = sc.nextLine();
+            System.out.println("\nParsing...");
+            WebCrawler crawler = new WebCrawler();
+
+        }
 
     }
 
@@ -181,19 +188,7 @@ public class WebCrawler {
         return (double) tmp / factor;
     }
 
-    private static Smartphonelist jaxbXMLtoObject() {
-        try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(Smartphonelist.class);
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
-            Smartphonelist list = (Smartphonelist) unmarshaller.unmarshal(new File(FILE_NAME));
-
-            return list;
-        } catch (JAXBException ex) {
-            ex.printStackTrace();
-        }
-        return null;
-    }
 
 
     private static void jaxbObjectToXML(Smartphonelist listSmartphones  ) {

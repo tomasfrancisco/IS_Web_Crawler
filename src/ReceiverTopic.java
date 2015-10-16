@@ -66,4 +66,5 @@ public class ReceiverTopic implements MessageListener {
         this.ctx.close();
         System.out.println("Terminated.");
     }
+
 }

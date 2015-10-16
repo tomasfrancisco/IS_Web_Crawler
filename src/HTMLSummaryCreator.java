@@ -1,5 +1,7 @@
+import org.jsoup.nodes.Document;
 import org.xml.sax.SAXException;
 import java.io.*;
+import javax.lang.model.util.Elements;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.*;
@@ -12,6 +14,7 @@ import javax.xml.XMLConstants;
 public class HTMLSummaryCreator {
     public static void main(String[] args)
     {
+       
         try
         {
             TransformerFactory tFactory = TransformerFactory.newInstance();
@@ -42,6 +45,9 @@ public class HTMLSummaryCreator {
 
             Transformer transformer = tFactory.newTransformer(xslDoc);
             transformer.transform(xmlDoc, new StreamResult(htmlFile));
+
+
+
         }
         catch(Exception e)
         {

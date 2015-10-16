@@ -3,10 +3,11 @@
 <html xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xsl:version="1.0">
     <head>
         <title> Pixmania Smartphones </title>
+        <link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css"/>
     </head>
     <body>
-        <h1> Fetched</h1>
-        <table border="1">
+        <h1> Pixmania Smartphones</h1>
+        <table border="1" class="w3-card w3-table w3-blue">
             <tr>
                 <td>
                     <b> Brand </b>
