@@ -1,26 +1,21 @@
-
-import java.io.*;
-import java.util.ArrayList;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-/**
- *
- * @author danielamaral
- */
-import java.io.File;
-import java.util.List;
-import java.util.Scanner;
+import javax.jms.JMSException;
+import javax.naming.NamingException;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.crypto.dsig.XMLObject;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+/**
+ * @author danielamaral
+ */
 
 public class WebCrawler {
 
@@ -162,7 +157,18 @@ public class WebCrawler {
         }
 
         //System.out.println(smartphones );
-        jaxbObjectToXML(listSmartphones);
+        File newFile = jaxbObjectToXML(listSmartphones);
+
+        try {
+            SenderTopic st = new SenderTopic("price_keeper_topic_sender", "jms/RemoteConnectionFactory", "jms/topic/SmartTopic", "topic", "topic");
+            st.startSenderTopic();
+            st.sendSmartphoneList(newFile);
+            st.stopSenderTopic();
+        } catch (NamingException e) {
+            e.printStackTrace();
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) throws IOException {
@@ -191,7 +197,7 @@ public class WebCrawler {
 
 
 
-    private static void jaxbObjectToXML(Smartphonelist listSmartphones  ) {
+    private static File jaxbObjectToXML(Smartphonelist listSmartphones  ) {
         try {
             OutputStream os = new FileOutputStream(FILE_NAME);
             JAXBContext jaxbContext = JAXBContext.newInstance(Smartphonelist.class);
@@ -209,5 +215,6 @@ public class WebCrawler {
         }catch (FileNotFoundException fnfEx){
             fnfEx.printStackTrace();
         }
+        return new File(FILE_NAME);
     }
 }
