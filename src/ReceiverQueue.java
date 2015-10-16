@@ -2,14 +2,16 @@ import javax.jms.*;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 public class ReceiverQueue implements MessageListener {
-    ConnectionFactory connection = null;
-    JMSContext ctx = null;
-    JMSConsumer consumer = null;
-    Queue queue = null;
-    String subscriberName = null;
+    private ConnectionFactory connection = null;
+    private JMSContext ctx = null;
+    private JMSProducer producer = null;
+    private JMSConsumer consumer = null;
+    private Queue queue = null;
+    protected String subscriberName = null;
+    protected PriceKeeper priceKeeper = null;
+    protected HTMLSummaryCreator htmlSummaryCreator = null;
 
     public ReceiverQueue(String subscriberName,
                          String connectionFactoryAddress,
@@ -19,10 +21,8 @@ public class ReceiverQueue implements MessageListener {
         this.subscriberName = subscriberName;
 
         InitialContext initialContext = new InitialContext();
-
         this.connection = (ConnectionFactory) initialContext.lookup(connectionFactoryAddress);
         this.queue = (Queue) initialContext.lookup(queueAddress);
-
         this.ctx = this.connection.createContext(username, password);
     }
 
@@ -30,60 +30,38 @@ public class ReceiverQueue implements MessageListener {
     public void onMessage(Message message) {
         TextMessage msg = (TextMessage) message;
         try {
-            System.out.println("Got message: " + msg.getText());
+            TextMessage response = this.ctx.createTextMessage();
+            Smartphone phone = this.priceKeeper.getSmartphone(msg.getText());
+            if(phone != null)
+                response.setText(Double.toString(phone.getPrice()));
+            else
+                response.setText("Reference not found.");
+            producer.send(msg.getJMSReplyTo(), response);
         } catch (JMSException e) {
             e.printStackTrace();
         }
     }
 
-    public void startReceiverQueue() throws JMSException, IOException {
+    public void startReceiverQueue(PriceKeeper priceKeeper) throws JMSException, IOException {
         System.out.println("Starting " + this.subscriberName + "...");
-
+        this.priceKeeper = priceKeeper;
         this.consumer = this.ctx.createConsumer(this.queue);
         this.consumer.setMessageListener(this);
+        this.producer = this.ctx.createProducer();
+    }
+
+    public void startReceiverQueue(HTMLSummaryCreator htmlSummaryCreator) throws JMSException, IOException {
+        System.out.println("Starting " + this.subscriberName + "...");
+        htmlSummaryCreator = htmlSummaryCreator;
+        this.consumer = this.ctx.createConsumer(this.queue);
+        this.consumer.setMessageListener(this);
+        this.producer = this.ctx.createProducer();
     }
 
     public void stopReceiverQueue() throws JMSException {
-        System.out.println("Exiting " + this.subscriberName + "...");
+        System.out.println("Exiting from " + this.subscriberName + "...");
         this.ctx.stop();
         this.ctx.close();
-    }
-
-    public static void main(String[] args) {
-        ReceiverQueue rt = null;
-        try {
-            rt = new ReceiverQueue("Receiver Queue", "jms/RemoteConnectionFactory", "jms/queue/PlayQueue", "topic", "topic");
-            rt.startReceiverQueue();
-
-            final ReceiverQueue finalRt = rt;
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override
-                public void run() {
-                    System.out.println("Shutting down " + finalRt.subscriberName + "...");
-                    try {
-                        finalRt.stopReceiverQueue();
-                    } catch (JMSException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-
-            System.out.println("To end program, type Q or q, " + "then <return>");
-            char answer = 0;
-            InputStreamReader inputStreamReader = new InputStreamReader(System.in);
-            while (!((answer == 'q') || (answer == 'Q'))) {
-                try {
-                    answer = (char) inputStreamReader.read();
-                } catch (IOException e) {
-                    System.out.println("I/O exception: " + e.toString());
-                }
-            }
-        } catch (NamingException e) {
-            e.printStackTrace();
-        } catch (JMSException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        System.out.println("Terminated.");
     }
 }
