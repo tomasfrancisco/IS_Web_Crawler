@@ -159,16 +159,27 @@ public class WebCrawler {
         //System.out.println(smartphones );
         File newFile = jaxbObjectToXML(listSmartphones);
 
-        try {
-            SenderTopic st = new SenderTopic("price_keeper_topic_sender", "jms/RemoteConnectionFactory", "jms/topic/SmartTopic", "topic", "topic");
-            st.startSenderTopic();
-            st.sendSmartphoneList(newFile);
-            st.stopSenderTopic();
-        } catch (NamingException e) {
-            e.printStackTrace();
-        } catch (JMSException e) {
-            e.printStackTrace();
+        int count = 0;
+        int maxTries = 3;
+        while(count < maxTries) {
+            try {
+                SenderTopic st = new SenderTopic("price_keeper_topic_sender", "jms/RemoteConnectionFactory", "jms/topic/SmartTopic", "topic", "topic");
+                st.startSenderTopic();
+                st.sendSmartphoneList(newFile);
+                st.stopSenderTopic();
+                break;
+            } catch (NamingException e) {
+                e.printStackTrace();
+                System.out.println("Retrying");
+                count++;
+            } catch (JMSException e) {
+                e.printStackTrace();
+                System.out.println("Retrying");
+                count++;
+            }
         }
+
+
     }
 
     public static void main(String[] args) throws IOException {
@@ -206,7 +217,7 @@ public class WebCrawler {
 
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 
-           // marshaller.marshal(listSmartphones, System.out );
+            // marshaller.marshal(listSmartphones, System.out );
 
             marshaller.marshal(listSmartphones, os);
 

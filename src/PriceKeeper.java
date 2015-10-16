@@ -1,8 +1,16 @@
+import org.xml.sax.SAXException;
+
 import javax.jms.JMSException;
 import javax.naming.NamingException;
+import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,6 +39,10 @@ public class PriceKeeper {
     }
 
     public void saveSmartphone(File file) {
+
+        //Validate XML File
+        if(!validateXML(file)) return;
+
         List<Smartphone> newSmartphones = this.jaxbXMLtoObject(file).getSmartphone();
 
         for(Smartphone newPhone : newSmartphones)
@@ -88,6 +100,38 @@ public class PriceKeeper {
                 System.out.println("I/O exception: " + e.toString());
             }
         }
+    }
+
+    public boolean validateXML(File f){
+        //Sources
+        Source xsdDoc = new StreamSource("src/xmlSchema.xsd");
+        Source xmlDoc = new StreamSource(f);
+        //Validacao
+        SchemaFactory sFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+
+        Schema schema;
+
+        try {
+            schema = sFactory.newSchema(xsdDoc);
+        } catch (SAXException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        Validator validator = schema.newValidator();
+
+        try {
+            validator.validate(xmlDoc);
+            System.out.println(xmlDoc.getSystemId() + " is valid");
+            return true;
+        } catch (SAXException e) {
+            System.out.println(xmlDoc.getSystemId() + " is NOT valid");
+            System.out.println("Reason: " + e.getLocalizedMessage());
+            return false;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public static void main(String[] args) {
