@@ -9,8 +9,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.List;
-import java.util.Scanner;
 
 public class SenderTopic {
     ConnectionFactory connection = null;
@@ -64,20 +62,19 @@ public class SenderTopic {
     }
 
     private void stopSenderTopic() {
-        System.out.println("Exiting " + this.publisherName);
+        System.out.println("Exiting " + this.publisherName + "...");
         this.ctx.stop();
         this.ctx.close();
+        System.out.println("Terminated.");
     }
 
-    private static File jaxbObjectToXML(Smartphonelist smphonelist) {
+    protected static File jaxbObjectToXML(Smartphonelist smphonelist) {
         try {
             XMLObject xmlObject;
             JAXBContext jaxbContext = JAXBContext.newInstance(Smartphonelist.class);
             Marshaller marshaller = jaxbContext.createMarshaller();
 
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-
-//            marshaller.marshal(smphonelist, xmlObject );
 
             File file = new File("saved.xml");
             marshaller.marshal(smphonelist, file);
@@ -88,38 +85,5 @@ public class SenderTopic {
             ex.printStackTrace();
         }
         return null;
-    }
-
-    public static void main(String[] args) {
-        SenderTopic st = null;
-        try {
-            st = new SenderTopic("SenderTopic", "jms/RemoteConnectionFactory", "jms/topic/SmartTopic", "topic", "topic");
-
-            st.startSenderTopic();
-
-            ObjectFactory factory = new ObjectFactory();
-            Smartphonelist list = factory.createSmartphonelist();
-            List<Smartphone> smartphonelist = list.getSmartphone();
-            Smartphone phone = new Smartphone();
-            phone.setBrand("OLAAA CRL!!!");
-            smartphonelist.add(phone);
-
-            File file = st.jaxbObjectToXML(list);
-
-            st.sendSmartphoneList(file);
-
-            final SenderTopic finalSt = st;
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override
-                public void run() {
-                    System.out.println("W: interrupt received, killing server…");
-                    finalSt.stopSenderTopic();
-                }
-            });
-        } catch (NamingException e) {
-            e.printStackTrace();
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
     }
 }
