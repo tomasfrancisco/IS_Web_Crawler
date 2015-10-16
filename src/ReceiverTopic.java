@@ -13,6 +13,7 @@ public class ReceiverTopic implements MessageListener {
     Topic topic = null;
     String subscriberName = null;
     PriceKeeper priceKeeper = null;
+    HTMLSummaryCreator htmlSummaryCreator = null;
 
     public ReceiverTopic(String subscriberName,
                          String connectionFactoryAddress,
@@ -39,7 +40,10 @@ public class ReceiverTopic implements MessageListener {
             FileOutputStream fileOutputStream = new FileOutputStream(file);
             fileOutputStream.write(data);
 
-            this.priceKeeper.saveSmartphone(file);
+            if(priceKeeper != null)
+                this.priceKeeper.saveSmartphone(file);
+            else
+                this.htmlSummaryCreator.saveSmartphone(file);
         } catch (JMSException e) {
             e.printStackTrace();
         } catch (FileNotFoundException e) {
@@ -53,6 +57,17 @@ public class ReceiverTopic implements MessageListener {
         System.out.println("Starting " + this.subscriberName + "...");
 
         this.priceKeeper = priceKeeper;
+
+        this.ctx.setClientID(this.subscriberName);
+        this.consumer = this.ctx.createDurableConsumer(this.topic, this.subscriberName);
+
+        this.consumer.setMessageListener(this);
+    }
+
+    public void startReceiverTopic(HTMLSummaryCreator htmlSummaryCreator) throws JMSException, IOException {
+        System.out.println("Starting " + this.subscriberName + "...");
+
+        this.htmlSummaryCreator = htmlSummaryCreator;
 
         this.ctx.setClientID(this.subscriberName);
         this.consumer = this.ctx.createDurableConsumer(this.topic, this.subscriberName);

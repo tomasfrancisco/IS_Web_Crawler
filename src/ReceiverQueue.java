@@ -11,7 +11,6 @@ public class ReceiverQueue implements MessageListener {
     private Queue queue = null;
     protected String subscriberName = null;
     protected PriceKeeper priceKeeper = null;
-    protected HTMLSummaryCreator htmlSummaryCreator = null;
 
     public ReceiverQueue(String subscriberName,
                          String connectionFactoryAddress,
@@ -45,14 +44,6 @@ public class ReceiverQueue implements MessageListener {
     public void startReceiverQueue(PriceKeeper priceKeeper) throws JMSException, IOException {
         System.out.println("Starting " + this.subscriberName + "...");
         this.priceKeeper = priceKeeper;
-        this.consumer = this.ctx.createConsumer(this.queue);
-        this.consumer.setMessageListener(this);
-        this.producer = this.ctx.createProducer();
-    }
-
-    public void startReceiverQueue(HTMLSummaryCreator htmlSummaryCreator) throws JMSException, IOException {
-        System.out.println("Starting " + this.subscriberName + "...");
-        htmlSummaryCreator = htmlSummaryCreator;
         this.consumer = this.ctx.createConsumer(this.queue);
         this.consumer.setMessageListener(this);
         this.producer = this.ctx.createProducer();
