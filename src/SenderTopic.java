@@ -67,23 +67,4 @@ public class SenderTopic {
         this.ctx.close();
         System.out.println("Terminated.");
     }
-
-    private static File jaxbObjectToXML(Smartphonelist smphonelist) {
-        try {
-            XMLObject xmlObject;
-            JAXBContext jaxbContext = JAXBContext.newInstance(Smartphonelist.class);
-            Marshaller marshaller = jaxbContext.createMarshaller();
-
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-
-            File file = new File("saved.xml");
-            marshaller.marshal(smphonelist, file);
-
-            return file;
-
-        } catch (JAXBException ex) {
-            ex.printStackTrace();
-        }
-        return null;
-    }
 }
